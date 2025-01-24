@@ -150,10 +150,6 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("challenge", challenge_command))
-    app.add_handler(CommandHandler("addgoal", add_goal))
-    app.add_handler(CommandHandler("goals", goals))
-    app.add_handler(CommandHandler("setdate", set_date))
-    app.add_handler(CommandHandler("dates", dates))
     app.run_polling()
 
 if __name__ == "__main__":
