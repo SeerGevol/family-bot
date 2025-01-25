@@ -2,8 +2,12 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
 import sqlite3
 import random
+from dotenv import load_dotenv
 import os
 from datetime import datetime
+
+# Загрузка переменных окружения из файла .env
+load_dotenv()
 
 # Укажите Telegram ID пользователей, которые могут пользоваться ботом
 ALLOWED_USERS = [7666108269, 1278614067]
@@ -91,41 +95,88 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-# Челленджи
+# Заглушки для всех команд
+async def gratitude(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Добавляет благодарность."""
+    await update.message.reply_text("Спасибо за вашу благодарность!")
+
+async def view_gratitudes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Список благодарностей пока пуст.")
+
+async def additem(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Добавлено в список покупок.")
+
+async def viewitems(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Ваш список покупок пуст.")
+
+async def removeitem(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Элемент удалён из списка покупок.")
+
+async def addgoal(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Цель добавлена.")
+
+async def goals(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Ваши цели.")
+
+async def setdate(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Дата добавлена.")
+
+async def dates(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Ваши памятные даты.")
+
+async def addphoto(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Фото добавлено в альбом.")
+
+async def viewalbum(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Ваш фотоальбом.")
+
+async def morning(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Доброе утро!")
+
+async def evening(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Добрый вечер!")
+
+async def mood(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Ваше настроение сохранено.")
+
+async def riddle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Загадка дня!")
+
 async def challenge_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Отправляет случайный челлендж."""
-    challenges = [
-        "💌 Напишите друг другу длинное сообщение о том, за что вы благодарны в отношениях.",
-        "📸 Поделитесь своей любимой фотографией из вашего общего прошлого.",
-        "🎁 Сделайте небольшой сюрприз: закажите доставку еды для партнёра.",
-        "🍴 Устройте онлайн-ужин, приготовив один и тот же рецепт.",
-        "🎵 Создайте плейлист из песен, которые ассоциируются с вашими отношениями.",
-        "🌟 Обсудите, как вы видите себя через 5 лет вместе.",
-        "🎯 Создайте виртуальную доску мечтаний с совместными целями.",
-        "📖 Прочитайте одну и ту же книгу и обсудите её.",
-        "📝 Напишите список из 10 вещей, которые вам нравятся в партнёре.",
-        "🎥 Посмотрите вместе фильм, связавшись по видеозвонку.",
-        "📞 Устройте звонок и обсудите свои мечты и планы.",
-        "🎨 Нарисуйте что-нибудь вместе и обменяйтесь результатами.",
-        "🍹 Приготовьте коктейль или кофе по одному рецепту и выпейте вместе.",
-        "📚 Обсудите ваши любимые фильмы, книги или сериалы.",
-        "💡 Обсудите, что бы вы хотели изменить в своём будущем."
-    ]
+    challenges = ["Челлендж 1", "Челлендж 2"]
     challenge = random.choice(challenges)
-    await update.message.reply_text(f"🎉 Ваш челлендж: {challenge}")
+    await update.message.reply_text(f"Ваш челлендж: {challenge}")
 
 # Основная функция
 def main():
-    """Запускает приложение Telegram бота."""
     init_db()
     BOT_TOKEN = os.getenv("BOT_TOKEN")
     if not BOT_TOKEN:
-        raise ValueError("Токен не найден! Убедитесь, что BOT_TOKEN указан в переменных окружения.")
+        raise ValueError("Токен не найден!")
 
     app = Application.builder().token(BOT_TOKEN).build()
+
+    # Регистрация всех команд
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("gratitude", gratitude))
+    app.add_handler(CommandHandler("viewgratitudes", view_gratitudes))
+    app.add_handler(CommandHandler("additem", additem))
+    app.add_handler(CommandHandler("viewitems", viewitems))
+    app.add_handler(CommandHandler("removeitem", removeitem))
+    app.add_handler(CommandHandler("addgoal", addgoal))
+    app.add_handler(CommandHandler("goals", goals))
+    app.add_handler(CommandHandler("setdate", setdate))
+    app.add_handler(CommandHandler("dates", dates))
+    app.add_handler(CommandHandler("addphoto", addphoto))
+    app.add_handler(CommandHandler("viewalbum", viewalbum))
+    app.add_handler(CommandHandler("morning", morning))
+    app.add_handler(CommandHandler("evening", evening))
+    app.add_handler(CommandHandler("mood", mood))
+    app.add_handler(CommandHandler("riddle", riddle))
     app.add_handler(CommandHandler("challenge", challenge_command))
+
+    print("Бот запущен!")
     app.run_polling()
 
 if __name__ == "__main__":
