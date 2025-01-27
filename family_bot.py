@@ -11,7 +11,7 @@ import logging
 load_dotenv()
 
 # Укажите Telegram ID пользователей
-ALLOWED_USERS = [7666108269, 1278614067]
+ALLOWED_USERS = [7666108269, 1278614067]  # Добавьте свои ID
 
 # Инициализация логирования
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -55,10 +55,10 @@ challenges = [
     "💡 Обсудите, что бы вы хотели изменить в своём будущем."
 ]
 
-# Переменная для текущих загадок
+# Текущие загадки пользователей
 current_riddles = {}
 
-# Проверка пользователя
+# Функция проверки пользователя
 def is_allowed(user_id):
     return user_id in ALLOWED_USERS
 
@@ -94,40 +94,35 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🗓️ /dates - Просмотреть памятные даты\n"
         "🧩 /riddle - Получить загадку\n"
         "🎉 /challenge - Получить челлендж\n"
-        "💬 /chat - Отправить сообщение в общий чат\n"
-        "📖 /viewchat - Просмотреть общий чат\n"
+        "💬 Общий чат работает автоматически: просто отправьте сообщение."
     )
 
-# Общий чат
-async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user.first_name
-    message = ' '.join(context.args)
-    if not message:
-        await update.message.reply_text("❌ Сообщение не может быть пустым.")
+# Общий чат: обработка сообщений
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    user_name = update.effective_user.first_name
+    message = update.message.text
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Проверка авторизации
+    if not is_allowed(user_id):
+        await update.message.reply_text("❌ Вы не авторизованы для использования этого бота.")
         return
 
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Сохранение сообщения в базу данных
     conn = sqlite3.connect("family_bot.db")
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO chat (user, message, timestamp) VALUES (?, ?, ?)", (user, message, timestamp))
+    cursor.execute("INSERT INTO chat (user, message, timestamp) VALUES (?, ?, ?)", (user_name, message, timestamp))
     conn.commit()
     conn.close()
 
-    await update.message.reply_text("💬 Сообщение отправлено в общий чат!")
-
-# Просмотр общего чата
-async def viewchat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    conn = sqlite3.connect("family_bot.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT user, message, timestamp FROM chat")
-    messages = cursor.fetchall()
-    conn.close()
-
-    if messages:
-        chat_texts = [f"📅 {msg[2]} - {msg[0]}: {msg[1]}" for msg in messages]
-        await update.message.reply_text("\n".join(chat_texts))
-    else:
-        await update.message.reply_text("💬 Общий чат пока пуст.")
+    # Отправка сообщения всем пользователям
+    for user in ALLOWED_USERS:
+        if user != user_id:  # Исключить отправителя
+            try:
+                await context.bot.send_message(chat_id=user, text=f"💬 {user_name}: {message}")
+            except Exception as e:
+                logging.error(f"Ошибка отправки сообщения пользователю {user}: {e}")
 
 # Команда /riddle
 async def riddle(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -164,12 +159,11 @@ def main():
 
     app = Application.builder().token(BOT_TOKEN).build()
 
-    # Регистрация команд
+    # Регистрация обработчиков
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("chat", chat))
-    app.add_handler(CommandHandler("viewchat", viewchat))
     app.add_handler(CommandHandler("riddle", riddle))
     app.add_handler(CommandHandler("challenge", challenge))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_answer))
 
     logging.info("Бот запущен!")
